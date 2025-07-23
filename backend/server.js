@@ -1,8 +1,5 @@
 import express from "express";
 import geminiRouter from "./routes/gemini.js";
-import dotenv from "dotenv";
-
-dotenv.config({ quiet: true });
 
 const app = express();
 const port = 3000;

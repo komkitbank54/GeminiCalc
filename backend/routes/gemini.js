@@ -2,10 +2,12 @@ import express from "express";
 import { GoogleGenAI } from "@google/genai";
 import * as fs from "node:fs";
 import dotenv from "dotenv";
+import multer from "multer";
 
 dotenv.config({ quiet: true });
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
 // ใช้ API KEY จาก env
 const ai = new GoogleGenAI({
@@ -13,40 +15,40 @@ const ai = new GoogleGenAI({
 });
 
 // POST endpoint
-router.post("/", async (req, res) => {
+router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const base64ImageFile = fs.readFileSync("./img/48119.jpg", {
+    const img = req.file;
+    if (!img) {
+      return res.status(400).json({ error: "No image uploaded" });
+    }
+
+    const base64ImageFile = fs.readFileSync(img.path, {
         encoding: "base64",
     });
     const contents = [
         {
             inlineData: {
-            mimeType: "image/jpeg",
+            mimeType: img.mimetype,
+            filename: img.originalname,
             data: base64ImageFile,
             },
         },
-        { text: `Objective:
-            ดูภาพโพยหวยใต้ดินไทย แล้วคำนวณรวมยอดตามกติกาด้านล่าง พร้อมตอบกลับตามฟอร์แมตที่กำหนด
-
-            กติกา:
-
-            ทั่วไป: เช่น 173 - 10 คือเลข 173 ซื้อ 10
-
-            รวม: เช่น 130 - 50x50 คือ 50+50 = 100
-
-            กลุ่ม: ถ้ามี { ชี้เลขหลายตัวกับราคาเดียว เช่น 83, 38 } - 50 คือ 50+50 = 100
-
-            รูปแบบผลลัพธ์:
-            1. ถ้าชัดทุกตัวเลข → status: PASS, process: <เลข>:<ราคา> + ... , sum: <รวมทั้งหมด>, result: <หมายเหตุ>
-            2. ถ้ามีเลขอ่านได้หลายแบบ → status: AMBIGUOUS, note: "...", scenario_1: {...}, scenario_2: {...}
-            3. ถ้าเบลอหรือข้อมูลขาด → status: FAIL, result: <หมายเหตุ>
-
-            หมายเหตุ: return มาเป็น pattern สำหรับนำไปใช้ต่อ และเฉพาะส่วน result ถ้ามีหลายเหตุให้ตอบภาษาไทย แต่พวกสถานะและตัวเลขให้เป็นภาษาอังกฤษ`
+        { text: `Look at the image of the Thai underground lottery slip and calculate the total amount according to the rules below, then reply in the specified format.
+            Rules:
+            General: For example, 173 - 10 means number 173 is bought for 10.
+            Split: For example, 130 - 50x50 means 50 + 50 = 100.
+            Group: If there’s } pointing to multiple numbers with the same amount, e.g., {83, 38} - 50 means 50 + 50 = 100.
+            Result format:
+            If all numbers are clear → {"file": "<filename>", "status": "PASS", "process": "<number>:<amount> + ..." , "sum": "<total>"}
+            If a number can be read in multiple ways → {"file": "<filename>", "status": "AMBIGUOUS", "scenario_1": {"process": "<number>:<amount> + ..." , "sum": "<total>", "note": "..."}, "scenario_2": {"process": "<number>:<amount> + ..." , "sum": "<total>", "note": "..."}}
+            If blurred or data is missing → {"file": "<filename>", "status": "FAIL", "result": "Unreadable or missing data"}
+            Note: Return the result in this pattern for further processing. Use English for status and numbers, but if there are multiple remarks in result, write that part in Thai.
+            Node2: When Returning dont return json, return only the result in the format specified above. Example: {"file": "lottery.jpg", "status": "PASS", "process": "173:10 + 130:50x50", "sum": "160"}.`
         },
     ];
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: contents,
     });
 

@@ -1,83 +1,114 @@
 import { useState } from "react";
 import axios from "axios";
+import FileInput from "./components/INPUT_File/FileInput";
+import ScanButton from "./components/BTN_Scan/ScanButton";
 
-function App() {
-  const [files, setFiles] = useState([]);
-  const [loading, setLoading] = useState(false);
+import "./App.css";
 
-  const testResponse = {
-    result:
-      '{"status": "PASS", "process": "130:50x50 + 368:30x…0 + 32:20 + 72:20 + 73:10 + 89:50", "sum": "490"}',
-  };
+import imgIcon from "./assets/icons/camera.png";
 
-  const handleFileChange = (event) => {
-    const MAX_FILES = 50;
+export default function App() {
+    const [files, setFiles] = useState([]);
+    const [loading, setLoading] = useState('none'); // none, uploaded, loading
+    const [result, setResult] = useState([]);
 
-    if (event.target.files.length > MAX_FILES) {
-      alert(`ใส่รูปภาพได้สูงสุด ${MAX_FILES} รูป`);
-      event.target.value = "";
-      setFiles([]);
-      return;
+    const handleFileChange = (newFiles) => {
+        const filesArray = Array.from(newFiles);
+        const filesWithPreview = filesArray.map((file) => ({
+            file,
+            previewUrl: URL.createObjectURL(file),
+        }));
+        setFiles(filesWithPreview);
+        setLoading('uploaded')
+    };
+
+    const handleSubmit = async () => {
+        if (files.length === 0) {
+            alert("Please select files to upload.");
+            return;
+        }
+
+        setResult([]);
+        setLoading('loading');
+        for (const item of files) {
+            const formData = new FormData();
+            formData.append("image", item.file);
+
+            try {
+                const response = await axios.post(
+                    "http://localhost:3000/api/gemini",
+                    formData,
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+                parseResponse(item.file.name, response.data, item.previewUrl);
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+        setFiles([]);
+        setLoading('none');
+    };
+
+    function parseResponse(fileName, response, previewUrl) {
+        try {
+            const objResult = JSON.parse(response.result);
+            objResult.fileName = fileName;
+            objResult.previewUrl = previewUrl;
+            setResult((prevResults) => [...prevResults, objResult]);
+        } catch (error) {
+            console.error("Error parsing response:", error);
+        }
     }
 
-    setFiles(event.target.files);
-  };
-
-  const handleSubmit = async () => {
-    if (files.length === 0) {
-      alert("Please select files to upload.");
-      return;
-    }
-
-    setLoading(true);
-    for (let i = 0; i < files.length; i++) {
-      const formData = new FormData();
-      formData.append("image", files[i]);
-
-      try {
-        const response = await axios.post(
-          "http://localhost:3000/api/gemini",
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-        console.log("Response:", response.data);
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    }
-    setLoading(false);
-  };
-
-  function parseResponse(response, index) {
-    try {
-      const parsed = JSON.parse(testResponse.result);
-      console.log("Parsed Response:", parsed);
-    } catch (error) {
-      console.error("Error parsing response:", error);
-    }
-  }
-  parseResponse(testResponse);
-  return (
-    <>
-      <div>
-        <input
-          type="file"
-          accept="image/jpeg, image/png"
-          multiple
-          id="fileInput"
-          onChange={handleFileChange}
-          disabled={loading}
-        />
-        <button onClick={handleSubmit} disabled={loading}>
-          {loading ? "Scanning..." : "Scan"}
-        </button>
-      </div>
-    </>
-  );
+    return (
+        <div className="container">
+            <h1 className="title">เว็บคำนวณยอด</h1>
+            <p className="subtitle">**รูปที่ไม่ชัดจะสแกนไม่ได้**</p>
+            <div clalssName="scan-section">
+                <FileInput
+                    maxFiles={50}
+                    disabled={loading === 'loading'}
+                    onFilesSelected={handleFileChange}
+                />
+                {files.length > 0 && (
+                    <div>
+                        <h1 className="file-header">
+                            <img
+                                className="imgIcon"
+                                src={imgIcon}
+                                alt="Image Icon"
+                            />
+                            รูปที่จะสแกน ({files.length})
+                        </h1>
+                        <div className="file-preview-container">
+                            {files.map((item, index) => (
+                                <img
+                                    key={index}
+                                    src={item.previewUrl}
+                                    alt={`preview-${index}`}
+                                    style={{
+                                        maxWidth: "300px",
+                                        margin: "10px",
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <ScanButton onClick={handleSubmit} loading={loading} />
+            </div>
+            {result &&
+                result.map((item, index) => (
+                    <div key={index}>
+                        <h3>รูป:</h3>
+                        <img
+                            src={item.previewUrl}
+                            alt={`uploaded-${index}`}
+                            style={{ maxWidth: "200px", margin: "10px" }}
+                        />
+                        <pre>รวม: {item.sum}</pre>
+                    </div>
+                ))}
+        </div>
+    );
 }
-
-export default App;

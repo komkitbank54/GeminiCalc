@@ -1,4 +1,3 @@
-
 :root {
     background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial,
@@ -93,7 +92,6 @@
     opacity: 0.8;
 }
 
-/* Custom scrollbar for dark theme */
 .file-preview-container::-webkit-scrollbar {
     height: 8px;
 }
@@ -111,6 +109,67 @@
 
 .file-preview-container::-webkit-scrollbar-thumb:hover {
     background: #666666;
+}
+
+.results-section {
+    margin-top: 3rem;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.result-item {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border: 2px solid #475569;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.result-item:hover {
+    border-color: #10b981;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+}
+
+.result-image-wrapper {
+    margin-bottom: 1rem;
+}
+
+.result-image {
+    width: 100%;
+    object-fit: cover;
+    border-radius: 1rem;
+}
+
+.result-content {
+    text-align: center;
+}
+
+.result-summary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.sum-text {
+    color: #ecfdf5;
+    font-size: 1rem;
+}
+
+.sum-value {
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 700;
 }
 
 /* High contrast mode support */

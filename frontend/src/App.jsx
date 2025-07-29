@@ -9,7 +9,7 @@ import imgIcon from "./assets/icons/camera.png";
 
 export default function App() {
     const [files, setFiles] = useState([]);
-    const [loading, setLoading] = useState('none'); // none, uploaded, loading
+    const [loading, setLoading] = useState("none"); // none, uploaded, loading
     const [result, setResult] = useState([]);
 
     const handleFileChange = (newFiles) => {
@@ -19,7 +19,7 @@ export default function App() {
             previewUrl: URL.createObjectURL(file),
         }));
         setFiles(filesWithPreview);
-        setLoading('uploaded')
+        setLoading("uploaded");
     };
 
     const handleSubmit = async () => {
@@ -29,7 +29,7 @@ export default function App() {
         }
 
         setResult([]);
-        setLoading('loading');
+        setLoading("loading");
         for (const item of files) {
             const formData = new FormData();
             formData.append("image", item.file);
@@ -40,18 +40,29 @@ export default function App() {
                     formData,
                     { headers: { "Content-Type": "multipart/form-data" } }
                 );
-                parseResponse(item.file.name, response.data, item.previewUrl);
+
+                console.log(`response= ${JSON.stringify(response.data)}`);
+                let resultText = response.data.result.trim();
+
+                if (resultText.startsWith("```json")) {
+                    resultText = resultText
+                        .replace(/^```json\s*/, "")
+                        .replace(/```$/, "")
+                        .trim();
+                }
+
+                parseResponse(item.file.name, resultText, item.previewUrl);
             } catch (error) {
                 console.error("Error:", error);
             }
         }
         setFiles([]);
-        setLoading('none');
+        setLoading("none");
     };
 
     function parseResponse(fileName, response, previewUrl) {
         try {
-            const objResult = JSON.parse(response.result);
+            const objResult = JSON.parse(response);
             objResult.fileName = fileName;
             objResult.previewUrl = previewUrl;
             setResult((prevResults) => [...prevResults, objResult]);
@@ -67,7 +78,7 @@ export default function App() {
             <div clalssName="scan-section">
                 <FileInput
                     maxFiles={50}
-                    disabled={loading === 'loading'}
+                    disabled={loading === "loading"}
                     onFilesSelected={handleFileChange}
                 />
                 {files.length > 0 && (
@@ -97,18 +108,34 @@ export default function App() {
                 )}
                 <ScanButton onClick={handleSubmit} loading={loading} />
             </div>
-            {result &&
-                result.map((item, index) => (
-                    <div key={index}>
-                        <h3>รูป:</h3>
-                        <img
-                            src={item.previewUrl}
-                            alt={`uploaded-${index}`}
-                            style={{ maxWidth: "200px", margin: "10px" }}
-                        />
-                        <pre>รวม: {item.sum}</pre>
+            {result.length > 0 && (
+                <div className="result-section">
+                    <h2 className="s">รูป</h2>
+                    <div className="result-grid">
+                        {result.map((item, index) => (
+                            <div key={index} className="result-item">
+                                <div className="result-image-wrapper">
+                                    <img
+                                        src={item.previewUrl}
+                                        alt={`uploaded-${index}`}
+                                        className="result-image"
+                                    />
+                                </div>
+                                <div className="result-content">
+                                    <div className="result-summary">
+                                        <span className="sum-text">
+                                            ยอดรวม:
+                                        </span>
+                                        <span className="sum-value">
+                                            {item.sum}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                ))}
+                </div>
+            )}
         </div>
     );
 }

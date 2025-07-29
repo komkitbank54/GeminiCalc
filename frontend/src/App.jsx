@@ -106,11 +106,12 @@ export default function App() {
                         </div>
                     </div>
                 )}
-                <ScanButton onClick={handleSubmit} loading={loading} />
+                <div className="scan-button-container">
+                    <ScanButton onClick={handleSubmit} loading={loading} />
+                </div>
             </div>
             {result.length > 0 && (
                 <div className="result-section">
-                    <h2 className="s">รูป</h2>
                     <div className="result-grid">
                         {result.map((item, index) => (
                             <div key={index} className="result-item">
@@ -122,14 +123,22 @@ export default function App() {
                                     />
                                 </div>
                                 <div className="result-content">
-                                    <div className="result-summary">
-                                        <span className="sum-text">
-                                            ยอดรวม:
-                                        </span>
-                                        <span className="sum-value">
-                                            {item.sum}
-                                        </span>
-                                    </div>
+                                    {item.status === "PASS" ? (
+                                        <div className="result-summary">
+                                            <span className="sum-text">
+                                                ยอดรวม:
+                                            </span>
+                                            <span className="sum-value">
+                                                {item.sum}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="result-fail">
+                                            <span className="sum-text">
+                                                สแกนไม่สำเร็จ
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}

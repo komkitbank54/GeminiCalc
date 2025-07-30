@@ -12,8 +12,6 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
-// ใช้ router แยก path
 app.use("/api/gemini", geminiRouter);
 
 app.listen(port, () => {

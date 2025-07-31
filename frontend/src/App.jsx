@@ -36,7 +36,7 @@ export default function App() {
 
             try {
                 const response = await axios.post(
-                    "http://localhost:3000/api/gemini",
+                    "http://localhost:3131/api/gemini",
                     formData,
                     { headers: { "Content-Type": "multipart/form-data" } }
                 );
